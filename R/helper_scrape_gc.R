@@ -10,6 +10,7 @@
 
 get_pbp_gc <- function(gameId,
                        dir = getOption("nflfastR.raw_directory", default = NULL),
+                       base_uri = "https://raw.githubusercontent.com/nflverse/nflfastR-raw/master/raw",
                        ...) {
 
   # testing only
@@ -26,7 +27,7 @@ get_pbp_gc <- function(gameId,
 
   season <- as.integer(substr(gameId, 1, 4))
 
-  raw <- fetch_raw(game_id = gameId, dir = dir)
+  raw <- fetch_raw(game_id = gameId, dir = dir, base_uri = base_uri)
 
   game_json <- raw[[1]]
 

@@ -173,33 +173,14 @@ please_work <- function(.f, otherwise = data.frame(), quiet = FALSE){
 # THIS IS CALLED FROM INSIDE get_pbp_gc AND get_pbp_nfl
 # MODIFY WITH CAUTION
 fetch_raw <- function(game_id,
-                      dir = getOption("nflfastR.raw_directory", default = NULL)){
+                      dir = getOption("nflfastR.raw_directory", default = NULL),
+                      base_uri = "https://raw.githubusercontent.com/nflverse/nflfastR-raw/master/raw"){
 
   season <- substr(game_id, 1, 4)
 
-  if (is.null(dir)) {
-
-    to_load <- file.path(
-      "https://raw.githubusercontent.com/nflverse/nflfastR-raw/master/raw",
-      season,
-      paste0(game_id, ".rds"),
-      fsep = "/"
-    )
-
-    fetched <- curl::curl_fetch_memory(to_load)
-
-    if (fetched$status_code == 404 & maybe_valid(game_id)) {
-      cli::cli_abort("The requested GameID {.val {game_id}} is not loaded yet, please try again later!")
-    } else if (fetched$status_code == 500) {
-      cli::cli_abort("The data hosting servers are down, please try again later!")
-    } else if (fetched$status_code == 404) {
-      cli::cli_abort("The requested GameID {.val {game_id}} is invalid!")
-    }
-
-    out <- read_raw_rds(fetched$content)
-
-  } else {
-    # build path to locally stored game files
+  # Handle both dir (for backward compatibility) and base_uri
+  if (!is.null(dir)) {
+    # Existing local directory logic
     local_file <- file.path(
       dir,
       season,
@@ -210,8 +191,46 @@ fetch_raw <- function(game_id,
       cli::cli_abort("File {.path {local_file}} doesn't exist!")
     }
 
-    out <- readRDS(local_file)
+    return(readRDS(local_file))
   }
+
+  # Check if base_uri is a file:// URI or local path
+  if (grepl("^file://", base_uri) || !grepl("^https?://", base_uri)) {
+    # Convert file:// URI to local path
+    local_base <- gsub("^file://", "", base_uri)
+
+    local_file <- file.path(
+      local_base,
+      season,
+      paste0(game_id, ".rds")
+    )
+
+    if (!file.exists(local_file)) {
+      cli::cli_abort("File {.path {local_file}} doesn't exist!")
+    }
+
+    return(readRDS(local_file))
+  }
+
+  # Handle HTTPS URIs
+  to_load <- file.path(
+    base_uri,
+    season,
+    paste0(game_id, ".rds"),
+    fsep = "/"
+  )
+
+  fetched <- curl::curl_fetch_memory(to_load)
+
+  if (fetched$status_code == 404 & maybe_valid(game_id)) {
+    cli::cli_abort("The requested GameID {.val {game_id}} is not loaded yet, please try again later!")
+  } else if (fetched$status_code == 500) {
+    cli::cli_abort("The data hosting servers are down, please try again later!")
+  } else if (fetched$status_code == 404) {
+    cli::cli_abort("The requested GameID {.val {game_id}} is invalid!")
+  }
+
+  out <- read_raw_rds(fetched$content)
 
   out
 }

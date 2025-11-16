@@ -409,6 +409,7 @@
 #' }
 fast_scraper <- function(game_ids,
                          dir = getOption("nflfastR.raw_directory", default = NULL),
+                         base_uri = "https://raw.githubusercontent.com/nflverse/nflfastR-raw/master/raw",
                          ...,
                          in_builder = FALSE) {
 
@@ -428,15 +429,15 @@ fast_scraper <- function(game_ids,
 
   suppressWarnings({
     p <- progressr::progressor(along = game_ids)
-    pbp <- furrr::future_map_dfr(game_ids, function(x, p, dir, ...) {
+    pbp <- furrr::future_map_dfr(game_ids, function(x, p, dir, base_uri, ...) {
       if (substr(x, 1, 4) < 2001) {
-        plays <- please_work(get_pbp_gc)(x, dir = dir, ...)
+        plays <- please_work(get_pbp_gc)(x, dir = dir, base_uri = base_uri, ...)
       } else {
-        plays <- please_work(get_pbp_nfl)(x, dir = dir, ...)
+        plays <- please_work(get_pbp_nfl)(x, dir = dir, base_uri = base_uri, ...)
       }
       p(sprintf("ID=%s", as.character(x)))
       return(plays)
-    }, p, dir = dir, ...)
+    }, p, dir = dir, base_uri = base_uri, ...)
 
     if (length(pbp) != 0) {
       user_message("Download finished. Adding variables...", "done")

@@ -9,6 +9,7 @@
 # @param id Specifies the game
 get_pbp_nfl <- function(id,
                         dir = getOption("nflfastR.raw_directory", default = NULL),
+                        base_uri = "https://raw.githubusercontent.com/nflverse/nflfastR-raw/master/raw",
                         ...) {
 
   #testing
@@ -19,7 +20,7 @@ get_pbp_nfl <- function(id,
   season <- substr(id, 1, 4)
   week <- as.integer(substr(id, 6, 7))
 
-  raw_data <- fetch_raw(game_id = id, dir = dir)
+  raw_data <- fetch_raw(game_id = id, dir = dir, base_uri = base_uri)
 
   season_type <- dplyr::case_when(
     season <= 2020 & week <= 17 ~ "REG",
@@ -176,7 +177,7 @@ get_pbp_nfl <- function(id,
       # have to do all this nonsense to make goal_to_go and yardline_side for compatibility with later functions
       yardline_side = str_split_and_extract(.data$yardline, " ", 1),
       yardline_number = as.numeric(str_split_and_extract(.data$yardline, " ", 2)),
-      quarter_end = dplyr::if_else(stringr::str_detect(.data$play_description, "END QUARTER"), 1, 0),
+      quarter_end = dplyr::if_else(stringr::str_detect(.data$play_description_with_jersey_numbers, "END QUARTER"), 1, 0),
       game_year = as.integer(season),
       season = as.integer(season),
       # this is only needed for epa and dropped later

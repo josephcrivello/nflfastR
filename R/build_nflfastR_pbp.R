@@ -56,6 +56,7 @@
 #' }
 build_nflfastR_pbp <- function(game_ids,
                                dir = getOption("nflfastR.raw_directory", default = NULL),
+                               base_uri = "https://raw.githubusercontent.com/nflverse/nflfastR-raw/master/raw",
                                ...,
                                decode = TRUE,
                                rules = TRUE) {
@@ -75,7 +76,7 @@ build_nflfastR_pbp <- function(game_ids,
 
   cli::cli_ul("{my_time()} | Start download of {game_count} game{?s}...")
 
-  ret <- fast_scraper(game_ids = game_ids, dir = dir, ..., in_builder = builder) |>
+  ret <- fast_scraper(game_ids = game_ids, dir = dir, base_uri = base_uri, ..., in_builder = builder) |>
     clean_pbp(in_builder = builder) |>
     add_qb_epa(in_builder = builder) |>
     add_xyac(in_builder = builder) |>
